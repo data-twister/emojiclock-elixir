@@ -7,7 +7,9 @@ An Elixir module for giving you an emoji clock for a given hour. See the [API re
 ```elixir
 iex> EmojiClock.time!(~T[02:17:47.179])
 "🕑"
-```
+```  
+
+
 
 ## Installing EmojiClock
 

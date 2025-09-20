@@ -3,18 +3,20 @@ defmodule EmojiClock do
   Returns a clock emoji for a given hour.
   """
 
-  @type datetime :: %DateTime{calendar: module,
-                              day: non_neg_integer,
-                              hour: non_neg_integer,
-                              microsecond: {non_neg_integer, non_neg_integer},
-                              minute: non_neg_integer,
-                              month: non_neg_integer,
-                              second: non_neg_integer,
-                              std_offset: integer,
-                              time_zone: String.t,
-                              utc_offset: integer,
-                              year: non_neg_integer,
-                              zone_abbr: String.t}
+  @type datetime :: %DateTime{
+          calendar: module,
+          day: non_neg_integer,
+          hour: non_neg_integer,
+          microsecond: {non_neg_integer, non_neg_integer},
+          minute: non_neg_integer,
+          month: non_neg_integer,
+          second: non_neg_integer,
+          std_offset: integer,
+          time_zone: String.t(),
+          utc_offset: integer,
+          year: non_neg_integer,
+          zone_abbr: String.t()
+        }
 
   @doc ~S"""
   Returns a clock emoji for the `local` hour. Accepts an optional `integer` offset.
@@ -26,11 +28,11 @@ defmodule EmojiClock do
       iex> is_bitstring(clock)
       true
   """
-  @spec now!(integer) :: String.t
+  @spec now!(integer) :: String.t()
   def now!(offset \\ 0) do
-    formated_time = format_time(Timex.local)
-    hour_with_offset = formated_time + offset
-    emoji(hour_with_offset)
+    Timex.add(Timex.local(), Timex.Duration.from_hours(offset))
+    |> format_time()
+    |> emoji()
   end
 
   @doc ~S"""
@@ -53,11 +55,14 @@ defmodule EmojiClock do
       iex> EmojiClock.now("+8")
       {:error, :invalid_argument}
   """
-  @spec now(integer) :: {:ok, String.t} | {:error, atom}
+  @spec now(integer) :: {:ok, String.t()} | {:error, atom}
   def now(offset \\ 0)
+
   def now(offset) when is_integer(offset) do
-    formated_time = format_time(Timex.local)
-    hour_with_offset = formated_time + offset
+    hour_with_offset =
+      Timex.add(Timex.local(), Timex.Duration.from_hours(offset))
+      |> format_time()
+
     {:ok, emoji(hour_with_offset)}
   end
 
@@ -74,9 +79,9 @@ defmodule EmojiClock do
       iex> EmojiClock.hour!(12)
       "🕛"
   """
-  @spec hour!(non_neg_integer) :: String.t
+  @spec hour!(non_neg_integer) :: String.t()
   def hour!(hour) when is_integer(hour) and hour >= 0 and hour <= 12 do
-    emoji(hour)
+    emoji({hour, 0})
   end
 
   @doc ~S"""
@@ -98,9 +103,9 @@ defmodule EmojiClock do
       iex> EmojiClock.hour(16)
       {:error, :invalid_argument}
   """
-  @spec hour(non_neg_integer) :: {:ok, String.t} | {:error, atom}
+  @spec hour(non_neg_integer) :: {:ok, String.t()} | {:error, atom}
   def hour(hour) when is_integer(hour) and hour >= 0 and hour <= 12 do
-    {:ok, emoji(hour)}
+    {:ok, emoji({hour, 0})}
   end
 
   def hour(_input), do: {:error, :invalid_argument}
@@ -117,7 +122,7 @@ defmodule EmojiClock do
       "🕙"
 
   """
-  @spec unix!(pos_integer) :: String.t
+  @spec unix!(pos_integer) :: String.t()
   def unix!(timestamp) when is_integer(timestamp) do
     do_unix(timestamp)
   end
@@ -141,7 +146,7 @@ defmodule EmojiClock do
       iex> EmojiClock.unix("clock pls")
       {:error, :invalid_argument}
   """
-  @spec unix(pos_integer) :: {:ok, String.t} | {:error, atom}
+  @spec unix(pos_integer) :: {:ok, String.t()} | {:error, atom}
   def unix(timestamp) when is_integer(timestamp) do
     {:ok, do_unix(timestamp)}
   end
@@ -159,7 +164,7 @@ defmodule EmojiClock do
       iex> EmojiClock.iso!("1985-01-23T22:07:54Z")
       "🕙"
   """
-  @spec iso!(String.t) :: String.t
+  @spec iso!(String.t()) :: String.t()
   def iso!(datetime) when is_bitstring(datetime) do
     do_iso(datetime)
   end
@@ -183,7 +188,7 @@ defmodule EmojiClock do
       iex> EmojiClock.iso(~N[2000-01-01 04:00:07.000000])
       {:error, :invalid_argument}
   """
-  @spec iso(String.t) :: {:ok, String.t} | {:error, atom}
+  @spec iso(String.t()) :: {:ok, String.t()} | {:error, atom}
   def iso(datetime) when is_bitstring(datetime) do
     {:ok, do_iso(datetime)}
   end
@@ -201,7 +206,7 @@ defmodule EmojiClock do
       iex> EmojiClock.naive!(~N[1985-01-23 20:30:42.657002])
       "🕗"
   """
-  @spec naive!(struct) :: String.t
+  @spec naive!(struct) :: String.t()
   def naive!(datetime) when is_map(datetime) do
     do_elixir_native_format(datetime)
   end
@@ -225,7 +230,7 @@ defmodule EmojiClock do
       iex> EmojiClock.naive("clock pls")
       {:error, :invalid_argument}
   """
-  @spec naive(struct) :: {:ok, String.t} | {:error, atom}
+  @spec naive(struct) :: {:ok, String.t()} | {:error, atom}
   def naive(datetime) when is_map(datetime) do
     {:ok, do_elixir_native_format(datetime)}
   end
@@ -243,7 +248,7 @@ defmodule EmojiClock do
       iex> EmojiClock.time!(~T[08:21:42])
       "🕗"
   """
-  @spec time!(struct) :: String.t
+  @spec time!(struct) :: String.t()
   def time!(time) do
     do_elixir_native_format(time)
   end
@@ -267,7 +272,7 @@ defmodule EmojiClock do
       iex> EmojiClock.time("clock pls")
       {:error, :invalid_argument}
   """
-  @spec time(struct) :: {:ok, String.t} | {:error, atom}
+  @spec time(struct) :: {:ok, String.t()} | {:error, atom}
   def time(time) when is_map(time) do
     {:ok, do_elixir_native_format(time)}
   end
@@ -309,7 +314,7 @@ defmodule EmojiClock do
       iex> EmojiClock.datetime!(datetime)
       "🕗"
   """
-  @spec datetime!(datetime) :: String.t
+  @spec datetime!(datetime) :: String.t()
   def datetime!(datetime) do
     do_elixir_native_format(datetime)
   end
@@ -357,7 +362,7 @@ defmodule EmojiClock do
       iex> EmojiClock.datetime("clock pls")
       {:error, :invalid_argument}
   """
-  @spec datetime(datetime) :: {:ok, String.t} | {:error, atom}
+  @spec datetime(datetime) :: {:ok, String.t()} | {:error, atom}
   def datetime(datetime) when is_map(datetime) do
     {:ok, do_elixir_native_format(datetime)}
   end
@@ -368,7 +373,7 @@ defmodule EmojiClock do
 
   defp do_unix(timestamp) do
     timestamp
-    |> Timex.from_unix
+    |> Timex.from_unix()
     |> format_time
     |> emoji
   end
@@ -387,27 +392,23 @@ defmodule EmojiClock do
   end
 
   defp format_time(input) do
-    input
-    |> Timex.format!("{h12}")
-    |> String.to_integer
+    h =
+      input
+      |> Timex.format!("{h12}")
+      |> String.to_integer()
+
+    m =
+      input
+      |> Timex.format!("{m}")
+      |> String.to_integer()
+
+    {h, m}
   end
 
-  defp emoji(hour) do
-    clocks = %{
-               0 => "🕛",
-               1 => "🕐",
-               2 => "🕑",
-               3 => "🕒",
-               4 => "🕓",
-               5 => "🕔",
-               6 => "🕕",
-               7 => "🕖",
-               8 => "🕗",
-               9 => "🕘",
-              10 => "🕙",
-              11 => "🕚",
-              12 => "🕛"
-            }
-    Map.get(clocks, hour)
+  defp emoji({h, m}) do
+    d = Float.floor(rem(h, 12) * 2 + m / 30 + 0.5) |> trunc()
+    d = if d < 2, do: d + 24, else: d
+    codepoint = 0x1F550 + div(d + rem(d, 2) * 23, 2)
+    <<codepoint::utf8>>
   end
 end
