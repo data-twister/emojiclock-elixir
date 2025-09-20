@@ -28,8 +28,11 @@ defmodule EmojiClock do
       iex> is_bitstring(clock)
       true
   """
-  @spec now!(integer) :: String.t()
+  @spec now!(integer | float) :: String.t()
   def now!(offset \\ 0) do
+    rounded = round(offset)
+    offset = trunc(rounded)
+
     Timex.add(Timex.local(), Timex.Duration.from_hours(offset))
     |> format_time()
     |> emoji()
@@ -66,6 +69,13 @@ defmodule EmojiClock do
     {:ok, emoji(hour_with_offset)}
   end
 
+  def now(offset) when is_float(offset) do
+    rounded = round(offset)
+
+    trunc(rounded)
+    |> now()
+  end
+
   def now(_input), do: {:error, :invalid_argument}
 
   @doc ~S"""
@@ -74,10 +84,10 @@ defmodule EmojiClock do
   ## Examples
 
       iex> EmojiClock.hour!(6)
-      "🕕"
+      "🕖"
 
       iex> EmojiClock.hour!(12)
-      "🕛"
+      "🕜"
   """
   @spec hour!(non_neg_integer) :: String.t()
   def hour!(hour) when is_integer(hour) and hour >= 0 and hour <= 12 do
@@ -90,10 +100,10 @@ defmodule EmojiClock do
   ## Examples
 
       iex> EmojiClock.hour(6)
-      {:ok, "🕕"}
+      {:ok, "🕖"}
 
       iex> EmojiClock.hour(12)
-      {:ok, "🕛"}
+      {:ok, "🕜"}
 
   Invalid input returns an error:
 
@@ -116,10 +126,10 @@ defmodule EmojiClock do
   ## Examples
 
       iex> EmojiClock.unix!(475359803)
-      "🕗"
+      "🕤"
 
       iex> EmojiClock.unix!(1491517308)
-      "🕙"
+      "🕦"
 
   """
   @spec unix!(pos_integer) :: String.t()
@@ -133,10 +143,10 @@ defmodule EmojiClock do
   ## Examples
 
       iex> EmojiClock.unix(475359803)
-      {:ok, "🕗"}
+      {:ok, "🕤"}
 
       iex> EmojiClock.unix(1491517308)
-      {:ok, "🕙"}
+      {:ok, "🕦"}
 
   Invalid input returns an error:
 
@@ -159,10 +169,10 @@ defmodule EmojiClock do
   ## Examples
 
       iex> EmojiClock.iso!("2017-04-06T20:32:16+00:00")
-      "🕗"
+      "🕤"
 
       iex> EmojiClock.iso!("1985-01-23T22:07:54Z")
-      "🕙"
+      "🕚"
   """
   @spec iso!(String.t()) :: String.t()
   def iso!(datetime) when is_bitstring(datetime) do
@@ -175,10 +185,10 @@ defmodule EmojiClock do
   ## Examples
 
       iex> EmojiClock.iso!("2017-04-06T20:32:16+00:00")
-      "🕗"
+      "🕤"
 
       iex> EmojiClock.iso!("1985-01-23T22:07:54Z")
-      "🕙"
+      "🕚"
 
   Invalid input returns an error:
 
@@ -201,10 +211,10 @@ defmodule EmojiClock do
   ## Examples
 
       iex> EmojiClock.naive!(~N[2000-01-01 04:00:07.000000])
-      "🕓"
+      "🕔"
 
       iex> EmojiClock.naive!(~N[1985-01-23 20:30:42.657002])
-      "🕗"
+      "🕤"
   """
   @spec naive!(struct) :: String.t()
   def naive!(datetime) when is_map(datetime) do
@@ -217,10 +227,10 @@ defmodule EmojiClock do
   ## Examples
 
       iex> EmojiClock.naive(~N[2000-01-01 04:00:07.000000])
-      {:ok, "🕓"}
+      {:ok, "🕔"}
 
       iex> EmojiClock.naive(~N[1985-01-23 20:30:42.657002])
-      {:ok, "🕗"}
+      {:ok, "🕤"}
 
   Invalid input returns an error:
 
@@ -243,10 +253,10 @@ defmodule EmojiClock do
   ## Examples
 
       iex> EmojiClock.time!(~T[14:32:07.052])
-      "🕑"
+      "🕞"
 
       iex> EmojiClock.time!(~T[08:21:42])
-      "🕗"
+      "🕤"
   """
   @spec time!(struct) :: String.t()
   def time!(time) do
@@ -259,10 +269,10 @@ defmodule EmojiClock do
   ## Examples
 
       iex> EmojiClock.time(~T[14:32:07.052])
-      {:ok, "🕑"}
+      {:ok, "🕞"}
 
       iex> EmojiClock.time(~T[08:21:42])
-      {:ok, "🕗"}
+      {:ok, "🕤"}
 
   Invalid input returns an error:
 
@@ -297,7 +307,7 @@ defmodule EmojiClock do
       ...>                      year: 2017,
       ...>                      zone_abbr: "UTC"}
       iex> EmojiClock.datetime!(datetime)
-      "🕒"
+      "🕓"
 
       iex> datetime = %DateTime{calendar: Calendar.ISO,
       ...>                      day: 3,
@@ -312,7 +322,7 @@ defmodule EmojiClock do
       ...>                      year: 1985,
       ...>                      zone_abbr: "UTC"}
       iex> EmojiClock.datetime!(datetime)
-      "🕗"
+      "🕤"
   """
   @spec datetime!(datetime) :: String.t()
   def datetime!(datetime) do
@@ -337,7 +347,7 @@ defmodule EmojiClock do
       ...>                      year: 2017,
       ...>                      zone_abbr: "UTC"}
       iex> EmojiClock.datetime(datetime)
-      {:ok, "🕒"}
+      {:ok, "🕓"}
 
       iex> datetime = %DateTime{calendar: Calendar.ISO,
       ...>                      day: 3,
@@ -352,7 +362,7 @@ defmodule EmojiClock do
       ...>                      year: 1985,
       ...>                      zone_abbr: "UTC"}
       iex> EmojiClock.datetime(datetime)
-      {:ok, "🕗"}
+      {:ok, "🕤"}
 
   Invalid input returns an error:
 
